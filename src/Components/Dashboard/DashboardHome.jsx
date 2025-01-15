@@ -75,7 +75,7 @@ function DashboardHome() {
             </NavLink>
           </nav>
         </div>
-        <div className="p-4 mb-8" onClick={handleLogout}>
+        <div className="p-4 mb-4" onClick={handleLogout}>
           <NavLink
             to="#"
             className="flex items-center py-2 px-4 hover:bg-gray-700 hover:text-red-400 rounded text-sm"
@@ -91,7 +91,7 @@ function DashboardHome() {
         {/* Header */}
         <div className="sticky top-0 w-full flex justify-between items-center bg-gray-100 shadow px-6 py-4 z-10">
           <div className="flex items-center space-x-4">
-            <h1 className="text-lg font-bold">Dashboard</h1>           
+            <h1 className="text-lg font-bold">Manage your expenses and income</h1>           
           </div>
           <div className="flex items-center space-x-4">
             <Bell size={16} className="text-gray-500 hover:text-gray-700 cursor-pointer" />

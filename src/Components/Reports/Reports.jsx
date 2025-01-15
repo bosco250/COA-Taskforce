@@ -18,10 +18,10 @@ const Reports = () => {
     transactions: [
       { date: '2024-01-01', amount: 1200, category: 'Income', subCategory: 'Salary', account: 'Bank' },
       { date: '2024-01-15', amount: -500, category: 'Bills', subCategory: 'Rent', account: 'Bank' },
-      { date: '2024-01-20', amount: -100, category: 'Food', subCategory: 'Groceries', account: 'Credit Card' },
+      { date: '2024-01-20', amount: -100, category: 'Food', subCategory: 'Groceries', account: 'Cash' },
       // Add more sample transactions
     ],
-    accounts: ['Bank', 'Credit Card', 'Mobile Money', 'Cash'],
+    accounts: ['Bank', 'Cash', 'Mobile Money'],
   };
 
   // Calculate summary data
@@ -92,7 +92,7 @@ const Reports = () => {
           {/* Date Range */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Date Range</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <input
                 type="date"
                 className="w-full px-3 py-2 border rounded-lg text-sm"
@@ -154,16 +154,16 @@ const Reports = () => {
           <h3 className="text-sm font-semibold mb-4">Income vs Expenses</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={[
-              { name: 'Income', amount: summaryData.totalIncome },
-              { name: 'Expenses', amount: summaryData.totalExpenses }
+                { name: 'Income', amount: summaryData.totalIncome },
+                { name: 'Expenses', amount: summaryData.totalExpenses }
             ]}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="amount" fill="#4CAF50" />
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip contentStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="amount" fill="#4CAF50" barSize={30} /> 
             </BarChart>
-          </ResponsiveContainer>
+        </ResponsiveContainer>
         </div>
 
         {/* Category Breakdown Pie Chart */}
@@ -183,6 +183,7 @@ const Reports = () => {
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
+                style={{ fontSize: "12px" }}
               >
                 {Object.entries(summaryData.categoryBreakdown).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 50%)`} />
