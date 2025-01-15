@@ -1,8 +1,15 @@
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Home, CreditCard, BarChart, DollarSign, Settings, LogOut, Bell, Search } from "lucide-react";
 
 function DashboardHome() {
+  const navigate=useNavigate()
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+        localStorage.removeItem("token");
+        navigate('/');
+    }
+};
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -56,15 +63,19 @@ function DashboardHome() {
               Budgets
             </NavLink>
             <NavLink
-              to="#"
-              className="flex items-center py-2 px-4 hover:bg-gray-700 rounded text-sm"
+              to="/dashboard/settings"
+              className={({ isActive }) =>
+                `flex items-center py-2 px-4 rounded text-sm ${
+                  isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                }`
+              }
             >
               <Settings size={16} className="mr-3" />
               Settings
             </NavLink>
           </nav>
         </div>
-        <div className="p-4 mb-8">
+        <div className="p-4 mb-8" onClick={handleLogout}>
           <NavLink
             to="#"
             className="flex items-center py-2 px-4 hover:bg-gray-700 hover:text-red-400 rounded text-sm"
@@ -80,15 +91,7 @@ function DashboardHome() {
         {/* Header */}
         <div className="sticky top-0 w-full flex justify-between items-center bg-gray-100 shadow px-6 py-4 z-10">
           <div className="flex items-center space-x-4">
-            <h1 className="text-lg font-bold">Dashboard</h1>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="px-4 py-2 border rounded-lg text-sm text-gray-700"
-              />
-              <Search size={16} className="absolute right-2 top-2 text-gray-500" />
-            </div>
+            <h1 className="text-lg font-bold">Dashboard</h1>           
           </div>
           <div className="flex items-center space-x-4">
             <Bell size={16} className="text-gray-500 hover:text-gray-700 cursor-pointer" />
@@ -104,7 +107,7 @@ function DashboardHome() {
         </div>
 
         {/* Content */}
-        <div className="mt-10 p-6">
+        <div className="p-6">
           <Outlet />
         </div>
       </div>

@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
-import { Download, FileText, Filter } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedAccounts, setSelectedAccounts] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState([]);
   const [reportType, setReportType] = useState('summary');
 
-  // Sample data - replace with actual data from your backend
+  // Sample data
   const sampleData = {
     transactions: [
       { date: '2024-01-01', amount: 1200, category: 'Income', subCategory: 'Salary', account: 'Bank' },
@@ -21,14 +21,6 @@ const Reports = () => {
       { date: '2024-01-20', amount: -100, category: 'Food', subCategory: 'Groceries', account: 'Credit Card' },
       // Add more sample transactions
     ],
-    categories: ['Income', 'Bills', 'Food', 'Transport', 'Shopping'],
-    subCategories: {
-      Income: ['Salary', 'Freelance', 'Investments'],
-      Bills: ['Rent', 'Utilities', 'Internet'],
-      Food: ['Groceries', 'Restaurants', 'Takeout'],
-      Transport: ['Fuel', 'Public Transport', 'Maintenance'],
-      Shopping: ['Clothes', 'Electronics', 'Home'],
-    },
     accounts: ['Bank', 'Credit Card', 'Mobile Money', 'Cash'],
   };
 
@@ -38,9 +30,7 @@ const Reports = () => {
       const inDateRange = (!dateRange.start || transaction.date >= dateRange.start) &&
                          (!dateRange.end || transaction.date <= dateRange.end);
       const inAccounts = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.account);
-      const inCategories = selectedCategories.length === 0 || selectedCategories.includes(transaction.category);
-      const inSubCategories = selectedSubCategories.length === 0 || selectedSubCategories.includes(transaction.subCategory);
-      return inDateRange && inAccounts && inCategories && inSubCategories;
+      return inDateRange && inAccounts;
     });
 
     return {
@@ -52,11 +42,32 @@ const Reports = () => {
         return acc;
       }, {}),
     };
-  }, [dateRange, selectedAccounts, selectedCategories, selectedSubCategories, sampleData.transactions]);
+  }, [dateRange, selectedAccounts, sampleData.transactions]);
 
-  const handleExport = (format) => {
-    // Implement export logic here
-    console.log(`Exporting as ${format}...`);
+  const handleExport = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('Detailed Financial Transactions', 20, 10);
+
+    // Add table for transactions
+    const tableData = sampleData.transactions.map(transaction => [
+      format(new Date(transaction.date), 'MM/dd/yyyy'),
+      transaction.category,
+      transaction.subCategory,
+      transaction.account,
+      `$${Math.abs(transaction.amount).toLocaleString()}`
+    ]);
+
+    doc.autoTable({
+      head: [['Date', 'Category', 'Subcategory', 'Account', 'Amount']],
+      body: tableData,
+      startY: 20,
+    });
+
+    // Save PDF
+    doc.save('transaction_report.pdf');
   };
 
   return (
@@ -66,18 +77,11 @@ const Reports = () => {
         <h1 className="text-xl font-bold">Financial Reports</h1>
         <div className="flex gap-2">
           <button
-            onClick={() => handleExport('pdf')}
+            onClick={handleExport}
             className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
           >
             <FileText size={16} className="mr-2" />
             Export PDF
-          </button>
-          <button
-            onClick={() => handleExport('excel')}
-            className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg text-sm"
-          >
-            <Download size={16} className="mr-2" />
-            Export Excel
           </button>
         </div>
       </div>
@@ -116,42 +120,6 @@ const Reports = () => {
               {sampleData.accounts.map(account => (
                 <option key={account} value={account}>{account}</option>
               ))}
-            </select>
-          </div>
-
-          {/* Category Selection */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Categories</label>
-            <select
-              multiple
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              value={selectedCategories}
-              onChange={(e) => {
-                const categories = Array.from(e.target.selectedOptions, option => option.value);
-                setSelectedCategories(categories);
-                setSelectedSubCategories([]); // Reset subcategories when categories change
-              }}
-            >
-              {sampleData.categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subcategory Selection */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Subcategories</label>
-            <select
-              multiple
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              value={selectedSubCategories}
-              onChange={(e) => setSelectedSubCategories(Array.from(e.target.selectedOptions, option => option.value))}
-            >
-              {selectedCategories.flatMap(category => 
-                sampleData.subCategories[category]?.map(sub => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))
-              )}
             </select>
           </div>
         </div>
@@ -226,31 +194,7 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Summary Statistics */}
-      <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm text-gray-500 mb-2">Total Income</h4>
-            <p className="text-2xl font-bold text-green-600">
-              ${summaryData.totalIncome.toLocaleString()}
-            </p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm text-gray-500 mb-2">Total Expenses</h4>
-            <p className="text-2xl font-bold text-red-600">
-              ${summaryData.totalExpenses.toLocaleString()}
-            </p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm text-gray-500 mb-2">Net Balance</h4>
-            <p className="text-2xl font-bold text-blue-600">
-              ${(summaryData.totalIncome - summaryData.totalExpenses).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Transactions Table (shown when detailed report is selected) */}
+      {/* Detailed Transactions Table */}
       {reportType === 'detailed' && (
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <h3 className="text-sm font-semibold mb-4">Detailed Transactions</h3>

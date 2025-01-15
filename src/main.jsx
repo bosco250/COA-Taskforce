@@ -11,6 +11,7 @@ import { StrictMode } from 'react';
 import './index.css'
 import Reports from './Components/Reports/Reports';
 import Budgets from './Components/Budgets/Budgets';
+import Settings from './Components/settings/Settings';
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: "transactions", element: <TransactionManagement /> },
       { path: "reports", element: <Reports /> },
       { path: "budgets", element: <Budgets /> },
+      { path: "settings", element: <Settings /> },
     ],
   },
 ]);
