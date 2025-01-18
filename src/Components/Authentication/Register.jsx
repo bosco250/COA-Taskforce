@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { registerUser } from '../api Service/api';
 
 function Register() {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ firstName: '', lastName: '', email: '', password: '' });
-
+const navigate=useNavigate()
   const validateForm = () => {
     let valid = true;
     let newErrors = { firstName: '', lastName: '', email: '', password: '' };
@@ -37,15 +40,11 @@ function Register() {
     return valid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+  
     if (validateForm()) {
-      setLoading(true);
-      // Simulate an API call
-      setTimeout(() => {
-        console.log('Register:', formData);
-        setLoading(false);
-      }, 2000);
+     await registerUser(formData,navigate,setErrors,setLoading)
     }
   };
 
@@ -55,6 +54,7 @@ function Register() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-6 flex flex-col justify-center sm:py-12">
+      <ToastContainer/>
       <div className="relative py-3 sm:max-w-xl sm:mx-auto w-full px-4 sm:px-0">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
         <div className="relative bg-white shadow-lg sm:rounded-3xl px-4 py-10 sm:p-20">

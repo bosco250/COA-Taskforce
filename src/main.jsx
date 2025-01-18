@@ -12,11 +12,13 @@ import './index.css'
 import Reports from './Components/Reports/Reports';
 import Budgets from './Components/Budgets/Budgets';
 import Settings from './Components/settings/Settings';
+import NewPassword from './Components/Authentication/NewPassword';
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
   { path: "/register", element: <Register /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/new-password", element: <NewPassword /> },
   {
     path: "/dashboard",
     element: <DashboardHome />,

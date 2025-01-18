@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
+    "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
@@ -18,7 +19,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
-    "react-toastify": "^11.0.2",
+    "react-toastify": "^11.0.3",
     "recharts": "^2.15.0",
     "taskforcepro": "file:"
   },

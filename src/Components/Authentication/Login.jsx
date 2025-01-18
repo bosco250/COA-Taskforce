@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { loginUser } from '../api Service/api';
 
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -31,13 +34,7 @@ function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate("/dashboard")
-      setLoading(true);
-      // Simulate an API call
-      setTimeout(() => {
-        console.log('Login:', formData);
-        setLoading(false);
-      }, 2000);
+     loginUser(formData,navigate,setLoading)
     }
   };
 
@@ -47,6 +44,7 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-6 flex flex-col justify-center sm:py-12">
+      <ToastContainer/>
       <div className="relative py-3 sm:max-w-xl sm:mx-auto w-full px-4 sm:px-0">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
         <div className="relative bg-white shadow-lg sm:rounded-3xl px-4 py-10 sm:p-20">
