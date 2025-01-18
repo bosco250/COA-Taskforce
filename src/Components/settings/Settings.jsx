@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getProfile, updatePassword, updateProfile } from '../api Service/api'; // Import updateProfile
+import { useNavigate } from 'react-router-dom';
 
 const Settings = ({ currentUser = { firstName: '', lastName: '', email: '', emailAlerts: false } }) => {
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate=useNavigate();
   const [profile, setProfile] = useState({
     firstName: currentUser.firstName || '',
     lastName: currentUser.lastName || '',
@@ -16,6 +19,29 @@ const Settings = ({ currentUser = { firstName: '', lastName: '', email: '', emai
     emailAlerts: currentUser.emailAlerts || false,
   });
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const id = localStorage.getItem('id'); // Assuming the user ID is stored in localStorage
+        if (id) {
+          const data = await getProfile(id);
+          setProfile({
+            firstName: data.data.firstName || '',
+            lastName: data.data.lastName || '',
+            email: data.data.email || '',
+          });
+          setNotifications({
+            emailAlerts: data.emailAlerts || false,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   const handleProfileChange = (field, value) => {
     setProfile({ ...profile, [field]: value });
   };
@@ -26,6 +52,45 @@ const Settings = ({ currentUser = { firstName: '', lastName: '', email: '', emai
 
   const handleNotificationsChange = (field, value) => {
     setNotifications({ ...notifications, [field]: value });
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const id = localStorage.getItem('id'); // Assuming the user ID is stored in localStorage
+      if (id) {
+        await updateProfile(id, navigate, profile); // Call updateProfile with id and profile
+        alert('User profile updated successfully');
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Failed to update profile');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (password.newPassword !== password.confirmPassword) {
+      alert("New password and confirm password do not match!");
+      return;
+    }
+  
+    try {
+      const id = localStorage.getItem('id'); // Assuming the user ID is stored in localStorage
+      if (id) {
+        await updatePassword(id, {
+          currentPassword: password.currentPassword,
+          newPassword: password.newPassword,
+        });
+        alert('Password updated successfully');
+        setPassword({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update password:', error);
+      alert('Failed to update password');
+    }
   };
 
   return (
@@ -88,7 +153,10 @@ const Settings = ({ currentUser = { firstName: '', lastName: '', email: '', emai
                 placeholder="Enter your email"
               />
             </div>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              onClick={handleSaveProfile} // Call handleSaveProfile on click
+            >
               Save Changes
             </button>
           </div>

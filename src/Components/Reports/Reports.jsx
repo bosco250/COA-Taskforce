@@ -1,32 +1,36 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
-import { Download, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { getTransactions } from "../api Service/api"; // Assuming this is the correct path
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [reportType, setReportType] = useState('summary');
+  
+  // States for transactions and loading
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Sample data
+  // Sample data for accounts
   const sampleData = {
-    transactions: [
-      { date: '2024-01-01', amount: 1200, category: 'Income', subCategory: 'Salary', account: 'Bank' },
-      { date: '2024-01-15', amount: -500, category: 'Bills', subCategory: 'Rent', account: 'Bank' },
-      { date: '2024-01-20', amount: -100, category: 'Food', subCategory: 'Groceries', account: 'Cash' },
-      // Add more sample transactions
-    ],
     accounts: ['Bank', 'Cash', 'Mobile Money'],
   };
 
-  // Calculate summary data
+  // Fetch transactions when the component is mounted
+  useEffect(() => {
+    getTransactions(setTransactions, setIsLoading); // Fetching transactions using the imported getTransactions function
+  }, []);
+
+  // Calculate summary data based on fetched transactions
   const summaryData = useMemo(() => {
-    const filteredTransactions = sampleData.transactions.filter(transaction => {
+    const filteredTransactions = transactions.filter(transaction => {
       const inDateRange = (!dateRange.start || transaction.date >= dateRange.start) &&
                          (!dateRange.end || transaction.date <= dateRange.end);
       const inAccounts = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.account);
@@ -42,8 +46,9 @@ const Reports = () => {
         return acc;
       }, {}),
     };
-  }, [dateRange, selectedAccounts, sampleData.transactions]);
+  }, [dateRange, selectedAccounts, transactions]);
 
+  // Handle Export PDF
   const handleExport = () => {
     const doc = new jsPDF();
 
@@ -52,7 +57,7 @@ const Reports = () => {
     doc.text('Detailed Financial Transactions', 20, 10);
 
     // Add table for transactions
-    const tableData = sampleData.transactions.map(transaction => [
+    const tableData = transactions.map(transaction => [
       format(new Date(transaction.date), 'MM/dd/yyyy'),
       transaction.category,
       transaction.subCategory,
@@ -70,6 +75,7 @@ const Reports = () => {
     doc.save('transaction_report.pdf');
   };
 
+  // Render the Reports component
   return (
     <div className="p-4 max-w-6xl mx-auto">
       {/* Header */}
@@ -163,7 +169,7 @@ const Reports = () => {
                 <Tooltip contentStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="amount" fill="#4CAF50" barSize={30} /> 
             </BarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
         </div>
 
         {/* Category Breakdown Pie Chart */}
@@ -211,16 +217,16 @@ const Reports = () => {
                 </tr>
               </thead>
               <tbody>
-                {sampleData.transactions.map((transaction, index) => (
+                {transactions.map((transaction, index) => (
                   <tr key={index} className="border-b">
                     <td className="px-4 py-2">{format(new Date(transaction.date), 'MM/dd/yyyy')}</td>
                     <td className="px-4 py-2">{transaction.category}</td>
-                    <td className="px-4 py-2">{transaction.subCategory}</td>
+                    <td className="px-4 py-2">{transaction.subcategory}</td>
                     <td className="px-4 py-2">{transaction.account}</td>
                     <td className={`px-4 py-2 text-right ${
                       transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      ${Math.abs(transaction.amount).toLocaleString()}
+                      RWF {Math.abs(transaction.amount).toLocaleString()}
                     </td>
                   </tr>
                 ))}

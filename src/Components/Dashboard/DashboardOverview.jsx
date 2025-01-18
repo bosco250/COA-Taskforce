@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -17,12 +17,10 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  CreditCard,
-  Calendar,
   Search,
 } from "lucide-react";
+import { getTransactions } from "../api Service/api";
 
-// Same static data as before
 const monthlyData = [
   { month: "Jan", income: 4000, expenses: 2400 },
   { month: "Feb", income: 3000, expenses: 1398 },
@@ -40,50 +38,37 @@ const expenseCategories = [
   { name: "Entertainment", value: 100 },
 ];
 
-const recentTransactions = [
-  {
-    id: 1,
-    date: "2024-01-10",
-    description: "Grocery Shopping",
-    amount: -85.5,
-    category: "Food",
-  },
-  {
-    id: 2,
-    date: "2024-01-09",
-    description: "Salary Deposit",
-    amount: 3000.0,
-    category: "Income",
-  },
-  {
-    id: 3,
-    date: "2024-01-08",
-    description: "Electric Bill",
-    amount: -120.0,
-    category: "Bills",
-  },
-  {
-    id: 4,
-    date: "2024-01-07",
-    description: "Online Shopping",
-    amount: -65.99,
-    category: "Shopping",
-  },
-  {
-    id: 5,
-    date: "2024-01-06",
-    description: "Freelance Payment",
-    amount: 500.0,
-    category: "Income",
-  },
-];
-
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 const DashboardOverview = () => {
-  const [timeFilter, setTimeFilter] = useState("monthly");
-  const totalIncome = 3500;
-  const totalExpenses = 1850;
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    getTransactions(setTransactions, setIsLoading);
+  }, []);
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    const matchesCategory =
+      filterCategory === "all" || transaction.category === filterCategory;
+    const matchesSearch =
+      transaction.description
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Calculate total income, total expenses, and current balance dynamically
+  const totalIncome = filteredTransactions
+    .filter((transaction) => transaction.category === "Income")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  const totalExpenses = filteredTransactions
+    .filter((transaction) => transaction.category !== "Income")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
   const currentBalance = totalIncome - totalExpenses;
 
   const StatCard = ({ title, amount, icon: Icon, trend }) => (
@@ -93,7 +78,7 @@ const DashboardOverview = () => {
         <Icon className="text-gray-400" size={12} />
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-bold">${amount.toLocaleString()}</p>
+        <p className="text-sm font-bold">RWF {amount.toLocaleString()}</p>
         {trend && (
           <span
             className={`text-xs ${
@@ -111,7 +96,7 @@ const DashboardOverview = () => {
   return (
     <div className="p-2 max-w-4xl mx-auto">
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2 ">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
         <StatCard
           title="Total Income"
           amount={totalIncome}
@@ -134,19 +119,7 @@ const DashboardOverview = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
         {/* Income vs Expenses Chart */}
-        <div className="bg-white p-2 rounded shadow-sm ">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold">Income vs Expenses</h3>
-            <select
-              className="border rounded text-xs px-1 py-0.5"
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
+        <div className="bg-white p-2 rounded shadow-sm">
           <ResponsiveContainer width="100%" height={200}>
             <BarChart
               data={monthlyData}
@@ -165,7 +138,6 @@ const DashboardOverview = () => {
 
         {/* Expense Categories Pie Chart */}
         <div className="bg-white p-2 rounded shadow-sm">
-          <h3 className="text-xs font-semibold mb-2">Expense Breakdown</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
               <Pie
@@ -176,10 +148,9 @@ const DashboardOverview = () => {
                 label={({ name, percent }) =>
                   `${name} ${(percent * 100).toFixed(0)}%`
                 }
-                style={{ fontSize: "12px" }}
                 outerRadius={50}
-                fill="#8884d8"
                 dataKey="value"
+                style={{ fontSize: "12px" }}
               >
                 {expenseCategories.map((entry, index) => (
                   <Cell
@@ -204,18 +175,24 @@ const DashboardOverview = () => {
                 type="text"
                 placeholder="Search..."
                 className="pl-6 pr-2 py-0.5 border rounded text-xs w-24"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search
                 className="absolute left-1 top-1 text-gray-400"
                 size={12}
               />
             </div>
-            <select className="border rounded text-xs px-1 py-0.5">
+            <select
+              className="border rounded text-xs px-1 py-0.5"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
               <option value="all">All</option>
-              <option value="income">Income</option>
-              <option value="food">Food</option>
-              <option value="bills">Bills</option>
-              <option value="shopping">Shopping</option>
+              <option value="Income">Income</option>
+              <option value="Food">Food</option>
+              <option value="Bills">Bills</option>
+              <option value="Shopping">Shopping</option>
             </select>
           </div>
         </div>
@@ -231,32 +208,28 @@ const DashboardOverview = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b hover:bg-gray-50">
-                  <td className="py-1 px-2">
-                    {format(new Date(transaction.date), "MM/dd/yy")}
-                  </td>
-                  <td className="py-1 px-2">{transaction.description}</td>
-                  <td className="py-1 px-2">
-                    <span
-                      className={`px-1 py-0.5 rounded-full text-xs ${
-                        transaction.category === "Income"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
+              {filteredTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-2">No transactions available</td>
+                </tr>
+              ) : (
+                filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b hover:bg-gray-50">
+                    <td className="py-1 px-2">
+                      {format(new Date(transaction.date), "MM/dd/yy")}
+                    </td>
+                    <td className="py-1 px-2">{transaction.description}</td>
+                    <td className="py-1 px-2">{transaction.category}</td>
+                    <td
+                      className={`py-1 px-2 text-right ${
+                        transaction.amount > 0 ? "text-green-600" : "text-red-600"
                       }`}
                     >
-                      {transaction.category}
-                    </span>
-                  </td>
-                  <td
-                    className={`py-1 px-2 text-right ${
-                      transaction.amount > 0 ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    ${Math.abs(transaction.amount).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+                    RWF {Math.abs(transaction.amount).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

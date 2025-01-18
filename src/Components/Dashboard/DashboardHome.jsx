@@ -1,15 +1,28 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Home, CreditCard, BarChart, DollarSign, Settings, LogOut, Bell, Search } from "lucide-react";
+import {
+  Home,
+  CreditCard,
+  BarChart,
+  DollarSign,
+  Settings,
+  LogOut,
+  Bell,
+  Search,
+  User,
+} from "lucide-react";
 
 function DashboardHome() {
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-        localStorage.removeItem("token");
-        navigate('/');
+      localStorage.removeItem("token");
+      localStorage.removeItem("firstame");
+      localStorage.removeItem("lastName");
+      localStorage.removeItem("id");
+      navigate("/");
     }
-};
+  };
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -91,17 +104,22 @@ function DashboardHome() {
         {/* Header */}
         <div className="sticky top-0 w-full flex justify-between items-center bg-gray-100 shadow px-6 py-4 z-10">
           <div className="flex items-center space-x-4">
-            <h1 className="text-lg font-bold">Manage your expenses and income</h1>           
+            <h1 className="text-lg font-bold">Track your Finance</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <Bell size={16} className="text-gray-500 hover:text-gray-700 cursor-pointer" />
-            <div className="flex items-center hover:cursor-pointer">
-              <span className="mr-3 text-sm text-gray-700">Dusengimana</span>
-              <img
-                src="/api/placeholder/32/32"
-                alt="Avatar"
-                className="w-8 h-8 rounded-full bg-gray-200"
-              />
+          <div className="relative group flex items-center hover:cursor-pointer">
+            <span className="mr-3 text-sm text-gray-700">
+              {localStorage.getItem("lastName")}{" "}
+              {localStorage.getItem("firstame")}
+            </span>
+            <User size={16} className="text-gray-600" />
+            <div className="absolute right--5 top-5 hidden group-hover:block bg-white shadow-lg rounded-lg py-2 w-32">
+              <NavLink
+                to="/dashboard/settings"
+                className="flex items-center px-4 py-2 hover:bg-gray-100 text-xs text-gray-800"
+              >
+                <Settings size={16} className="mr-2" />
+                Profile
+              </NavLink>
             </div>
           </div>
         </div>
