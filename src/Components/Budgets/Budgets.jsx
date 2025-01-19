@@ -1,8 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { addBudget, fetchBudgets } from '../api Service/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+  Typography,
+  Paper,
+  IconButton,
+  Chip,
+  Stack,
+  Tooltip,
+  Grid
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  CalendarToday as CalendarIcon,
+  Category as CategoryIcon,
+  AttachMoney as MoneyIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon
+} from '@mui/icons-material';
 
 const Budgets = () => {
   const [budgets, setBudgets] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentBudget, setCurrentBudget] = useState({
     category: '',
     amount: '',
@@ -58,12 +88,14 @@ const Budgets = () => {
 
       if (newBudget && typeof newBudget === 'object') {
         setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
+        window.location.reload(); // Reload the window after successful addition
       } else {
         throw new Error('Invalid budget data returned');
       }
 
       alert('Budget saved successfully!');
       resetForm();
+      setIsModalOpen(false);
     } catch (error) {
       console.error('Failed to save budget:', error);
       alert('Failed to save the budget. Please try again.');
@@ -82,7 +114,6 @@ const Budgets = () => {
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -99,128 +130,209 @@ const Budgets = () => {
     return 'Active';
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Active':
+        return 'success';
+      case 'Pending':
+        return 'warning';
+      case 'Expired':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <h1 className="text-xl font-bold text-gray-800">Budget Manager</h1>
-
-      <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
-        <h2 className="text-base font-semibold text-gray-700">Add New Budget</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700">Category</label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
-              value={currentBudget.category}
-              onChange={(e) =>
-                setCurrentBudget({ ...currentBudget, category: e.target.value })
-              }
-              placeholder="Enter category (e.g., Food, Housing)"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">Budget Amount</label>
-            <input
-              type="number"
-              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
-              value={currentBudget.amount}
-              onChange={(e) =>
-                setCurrentBudget({ ...currentBudget, amount: e.target.value })
-              }
-              placeholder="Enter budget amount"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">Start Date</label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
-              value={currentBudget.startDate}
-              onChange={(e) =>
-                setCurrentBudget({ ...currentBudget, startDate: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">End Date</label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
-              value={currentBudget.endDate}
-              onChange={(e) =>
-                setCurrentBudget({ ...currentBudget, endDate: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700">Recurring Type</label>
-            <select
-              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
-              value={currentBudget.recurringType}
-              onChange={(e) =>
-                setCurrentBudget({
-                  ...currentBudget,
-                  recurringType: e.target.value,
-                })
-              }
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            onClick={handleSaveBudget}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-xs"
+    <Box sx={{ p: 2, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+            Budget Manager
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon sx={{ fontSize: '0.7rem' }} />}
+            onClick={() => setIsModalOpen(true)}
+            sx={{ borderRadius: 1, fontSize: '0.7rem', py: 0.5 }}
           >
             Add Budget
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Stack>
+      </motion.div>
 
-      <div className="space-y-4">
-        <h2 className="text-base font-semibold text-gray-700">All Budgets</h2>
-        {budgets.length > 0 ? (
-          budgets.map((budget, index) => (
-            <div
-              key={index}
-              className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center"
-            >
-              <div>
-                <h3 className="font-medium text-xs text-gray-700">{budget.category}</h3>
-                <p className="text-xs text-gray-500">
-                  ${budget.amount} - {budget.recurringType.charAt(0).toUpperCase() +
-                    budget.recurringType.slice(1)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {formatDate(budget.startDate)} to {formatDate(budget.endDate)}
-                </p>
-              </div>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  getBudgetStatus(budget.startDate, budget.endDate) === 'Active'
-                    ? 'bg-green-200 text-green-800'
-                    : getBudgetStatus(budget.startDate, budget.endDate) === 'Expired'
-                    ? 'bg-gray-200 text-gray-800'
-                    : 'bg-yellow-200 text-yellow-800'
-                }`}
+      <Dialog 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontSize: '0.8rem' }}>Add New Budget</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Category"
+              fullWidth
+              value={currentBudget.category}
+              onChange={(e) => setCurrentBudget({ ...currentBudget, category: e.target.value })}
+              InputProps={{
+                startAdornment: <CategoryIcon sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }} />,
+              }}
+              sx={{ '& .MuiInputLabel-root': { fontSize: '0.7rem' }, '& .MuiInputBase-input': { fontSize: '0.7rem' } }}
+            />
+            <TextField
+              label="Budget Amount (RWF)"
+              type="number"
+              fullWidth
+              value={currentBudget.amount}
+              onChange={(e) => setCurrentBudget({ ...currentBudget, amount: e.target.value })}
+              InputProps={{
+                startAdornment: <MoneyIcon sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }} />,
+              }}
+              sx={{ '& .MuiInputLabel-root': { fontSize: '0.7rem' }, '& .MuiInputBase-input': { fontSize: '0.7rem' } }}
+            />
+            <TextField
+              label="Start Date"
+              type="date"
+              fullWidth
+              value={currentBudget.startDate}
+              onChange={(e) => setCurrentBudget({ ...currentBudget, startDate: e.target.value })}
+              InputProps={{
+                startAdornment: <CalendarIcon sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }} />,
+              }}
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputLabel-root': { fontSize: '0.7rem' }, '& .MuiInputBase-input': { fontSize: '0.7rem' } }}
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              fullWidth
+              value={currentBudget.endDate}
+              onChange={(e) => setCurrentBudget({ ...currentBudget, endDate: e.target.value })}
+              InputProps={{
+                startAdornment: <CalendarIcon sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }} />,
+              }}
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputLabel-root': { fontSize: '0.7rem' }, '& .MuiInputBase-input': { fontSize: '0.7rem' } }}
+            />
+            <FormControl fullWidth>
+              <InputLabel sx={{ fontSize: '0.7rem' }}>Recurring Type</InputLabel>
+              <Select
+                value={currentBudget.recurringType}
+                label="Recurring Type"
+                onChange={(e) => setCurrentBudget({ ...currentBudget, recurringType: e.target.value })}
+                sx={{ fontSize: '0.7rem' }}
               >
-                {getBudgetStatus(budget.startDate, budget.endDate)}
-              </span>
-            </div>
-          ))
-        ) : (
-          <p className="text-xs text-gray-600">No budgets added yet.</p>
-        )}
-      </div>
-    </div>
+                <MenuItem value="weekly" sx={{ fontSize: '0.7rem' }}>Weekly</MenuItem>
+                <MenuItem value="monthly" sx={{ fontSize: '0.7rem' }}>Monthly</MenuItem>
+                <MenuItem value="yearly" sx={{ fontSize: '0.7rem' }}>Yearly</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(false);
+            }}
+            sx={{ fontSize: '0.7rem' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveBudget}
+            sx={{ fontSize: '0.7rem' }}
+          >
+            Save Budget
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <motion.div layout>
+        <Typography sx={{ mb: 1, fontSize: '0.8rem' }}>
+          All Budgets
+        </Typography>
+        <Grid container spacing={2}>
+          <AnimatePresence>
+            {budgets.length > 0 ? (
+              budgets.map((budget, index) => (
+                <Grid item xs={12} md={6} lg={4} key={index}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        height: '100%',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          boxShadow: 6,
+                        },
+                      }}
+                    >
+                      <Stack spacing={1}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography sx={{ fontSize: '0.7rem', fontWeight: 'medium' }}>
+                            {budget.category}
+                          </Typography>
+                          <Chip
+                            label={getBudgetStatus(budget.startDate, budget.endDate)}
+                            color={getStatusColor(getBudgetStatus(budget.startDate, budget.endDate))}
+                            size="small"
+                            sx={{ fontSize: '0.6rem', height: '16px' }}
+                          />
+                        </Stack>
+                        <Typography sx={{ fontSize: '0.8rem', color: 'primary.main' }}>
+                          RWF {budget.amount.toLocaleString()}
+                        </Typography>
+                        <Stack spacing={0.5}>
+                          <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                            {budget.recurringType.charAt(0).toUpperCase() + budget.recurringType.slice(1)}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                            {formatDate(budget.startDate)} - {formatDate(budget.endDate)}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                          <Tooltip title="Edit">
+                            <IconButton size="small">
+                              <EditIcon sx={{ fontSize: '0.8rem' }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error">
+                              <DeleteIcon sx={{ fontSize: '0.8rem' }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </Stack>
+                    </Paper>
+                  </motion.div>
+                </Grid>
+              ))
+            ) : (
+              <Grid item xs={12}>
+                <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', textAlign: 'center' }}>
+                  No budgets added yet.
+                </Typography>
+              </Grid>
+            )}
+          </AnimatePresence>
+        </Grid>
+      </motion.div>
+    </Box>
   );
 };
 
