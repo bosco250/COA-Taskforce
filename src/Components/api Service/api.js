@@ -220,3 +220,38 @@ export const updatePassword = async (id, passwordData) => {
     throw new Error('Failed to update password');
   }
 };
+
+
+//add budget 
+export const addBudget = async (authenticateToken, registerBudget) => {
+  const backend = import.meta.env.VITE_BACKEND_URL;
+
+  try {
+    const response = await axios.post(
+      `${backend}/budget/register`,
+      registerBudget,
+      {
+        headers: {
+          Authorization: `Bearer ${authenticateToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error saving budget:', error);
+    throw error;
+  }
+};
+
+export const fetchBudgets = async (userId) => {
+  const backend = import.meta.env.VITE_BACKEND_URL;
+
+  try {
+    const response = await axios.get(`${backend}/budget/all/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching budgets:', error);
+    throw error;
+  }
+};

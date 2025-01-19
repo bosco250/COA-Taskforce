@@ -13,22 +13,18 @@ const Reports = () => {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [reportType, setReportType] = useState('summary');
-  
-  // States for transactions and loading
+
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Sample data for accounts
   const sampleData = {
     accounts: ['Bank', 'Cash', 'Mobile Money'],
   };
 
-  // Fetch transactions when the component is mounted
   useEffect(() => {
-    getTransactions(setTransactions, setIsLoading); // Fetching transactions using the imported getTransactions function
+    getTransactions(setTransactions, setIsLoading);
   }, []);
 
-  // Calculate summary data based on fetched transactions
   const summaryData = useMemo(() => {
     const filteredTransactions = transactions.filter(transaction => {
       const inDateRange = (!dateRange.start || transaction.date >= dateRange.start) &&
@@ -48,15 +44,31 @@ const Reports = () => {
     };
   }, [dateRange, selectedAccounts, transactions]);
 
-  // Handle Export PDF
+  const monthlyData = useMemo(() => {
+    const monthlySummary = {};
+
+    transactions.forEach(transaction => {
+      const month = format(new Date(transaction.date), 'MMMM yyyy');
+      if (!monthlySummary[month]) {
+        monthlySummary[month] = { month, income: 0, expenses: 0 };
+      }
+
+      if (transaction.amount > 0) {
+        monthlySummary[month].income += transaction.amount;
+      } else {
+        monthlySummary[month].expenses += Math.abs(transaction.amount);
+      }
+    });
+
+    return Object.values(monthlySummary);
+  }, [transactions]);
+
   const handleExport = () => {
     const doc = new jsPDF();
 
-    // Title
     doc.setFontSize(18);
     doc.text('Detailed Financial Transactions', 20, 10);
 
-    // Add table for transactions
     const tableData = transactions.map(transaction => [
       format(new Date(transaction.date), 'MM/dd/yyyy'),
       transaction.category,
@@ -71,20 +83,17 @@ const Reports = () => {
       startY: 20,
     });
 
-    // Save PDF
     doc.save('transaction_report.pdf');
   };
 
-  // Render the Reports component
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-bold">Financial Reports</h1>
         <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
+            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg text-xs"
           >
             <FileText size={16} className="mr-2" />
             Export PDF
@@ -92,34 +101,31 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Date Range */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Date Range</label>
+            <label className="block text-xs font-medium text-gray-700">Date Range</label>
             <div className="flex flex-col gap-2">
               <input
                 type="date"
-                className="w-full px-3 py-2 border rounded-lg text-sm"
+                className="w-full px-3 py-2 border rounded-lg text-xs"
                 value={dateRange.start}
                 onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
               />
               <input
                 type="date"
-                className="w-full px-3 py-2 border rounded-lg text-sm"
+                className="w-full px-3 py-2 border rounded-lg text-xs"
                 value={dateRange.end}
                 onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
               />
             </div>
           </div>
 
-          {/* Account Selection */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Accounts</label>
+            <label className="block text-xs font-medium text-gray-700">Accounts</label>
             <select
               multiple
-              className="w-full px-3 py-2 border rounded-lg text-sm"
+              className="w-full px-3 py-2 border rounded-lg text-xs"
               value={selectedAccounts}
               onChange={(e) => setSelectedAccounts(Array.from(e.target.selectedOptions, option => option.value))}
             >
@@ -131,11 +137,10 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Report Type Selection */}
       <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
         <div className="flex gap-4">
           <button
-            className={`px-4 py-2 rounded-lg text-sm ${
+            className={`px-4 py-2 rounded-lg text-xs ${
               reportType === 'summary' ? 'bg-blue-500 text-white' : 'bg-gray-100'
             }`}
             onClick={() => setReportType('summary')}
@@ -143,7 +148,7 @@ const Reports = () => {
             Summary Report
           </button>
           <button
-            className={`px-4 py-2 rounded-lg text-sm ${
+            className={`px-4 py-2 rounded-lg text-xs ${
               reportType === 'detailed' ? 'bg-blue-500 text-white' : 'bg-gray-100'
             }`}
             onClick={() => setReportType('detailed')}
@@ -153,11 +158,9 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Summary Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Income vs Expenses Bar Chart */}
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-sm font-semibold mb-4">Income vs Expenses</h3>
+          <h3 className="text-xs font-semibold mb-4">Income vs Expenses</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={[
                 { name: 'Income', amount: summaryData.totalIncome },
@@ -172,9 +175,8 @@ const Reports = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Category Breakdown Pie Chart */}
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-sm font-semibold mb-4">Category Breakdown</h3>
+          <h3 className="text-xs font-semibold mb-4">Category Breakdown</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -201,12 +203,11 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Detailed Transactions Table */}
       {reportType === 'detailed' && (
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-sm font-semibold mb-4">Detailed Transactions</h3>
+          <h3 className="text-xs font-semibold mb-4">Detailed Transactions</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left">Date</th>

@@ -125,7 +125,7 @@ function DashboardHome() {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="">
           <Outlet />
         </div>
       </div>

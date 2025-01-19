@@ -1,140 +1,225 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { addBudget, fetchBudgets } from '../api Service/api';
 
 const Budgets = () => {
-  const [income, setIncome] = useState('');
-  const [budgetName, setBudgetName] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [recurringType, setRecurringType] = useState('weekly');
-  const [budget, setBudget] = useState(null);
+  const [budgets, setBudgets] = useState([]);
+  const [currentBudget, setCurrentBudget] = useState({
+    category: '',
+    amount: '',
+    startDate: '',
+    endDate: '',
+    recurringType: 'monthly',
+  });
 
-  // Predefined expense categories with percentages
-  const expenseCategories = [
-    { category: 'Housing', percentage: 30 },
-    { category: 'Food', percentage: 20 },
-    { category: 'Transportation', percentage: 15 },
-    { category: 'Savings', percentage: 10 },
-    { category: 'Entertainment', percentage: 10 },
-    { category: 'Utilities', percentage: 10 },
-    { category: 'Miscellaneous', percentage: 5 },
-  ];
+  useEffect(() => {
+    loadBudgets();
+  }, []);
 
-  const handleGenerateBudget = () => {
-    if (!income || !budgetName || !startDate || !endDate) {
-      alert('Please fill out all fields to generate the budget.');
+  const loadBudgets = async () => {
+    try {
+      const response = await fetchBudgets(localStorage.getItem('id'));
+      if (response && Array.isArray(response.budgets)) {
+        setBudgets(response.budgets);
+      } else {
+        setBudgets([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch budgets:', error);
+      alert('Failed to load budgets. Please try again.');
+    }
+  };
+
+  const handleSaveBudget = async () => {
+    const { category, amount, startDate, endDate, recurringType } = currentBudget;
+
+    if (!category || !amount || !startDate || !endDate) {
+      alert('Please fill in all fields.');
       return;
     }
 
-    const totalIncome = parseFloat(income);
-    if (isNaN(totalIncome) || totalIncome <= 0) {
-      alert('Please enter a valid income amount.');
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert('Please enter a valid budget amount.');
       return;
     }
 
-    // Calculate budget for each category
-    const calculatedBudget = expenseCategories.map((expense) => ({
-      category: expense.category,
-      amount: ((expense.percentage / 100) * totalIncome).toFixed(2),
-    }));
+    const budgetData = {
+      userId: localStorage.getItem('id'),
+      category,
+      amount: parsedAmount,
+      startDate,
+      endDate,
+      recurringType,
+    };
 
-    setBudget(calculatedBudget);
+    try {
+      const token = localStorage.getItem('token');
+      const newBudget = await addBudget(token, budgetData);
+
+      if (newBudget && typeof newBudget === 'object') {
+        setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
+      } else {
+        throw new Error('Invalid budget data returned');
+      }
+
+      alert('Budget saved successfully!');
+      resetForm();
+    } catch (error) {
+      console.error('Failed to save budget:', error);
+      alert('Failed to save the budget. Please try again.');
+    }
+  };
+
+  const resetForm = () => {
+    setCurrentBudget({
+      category: '',
+      amount: '',
+      startDate: '',
+      endDate: '',
+      recurringType: 'monthly',
+    });
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getBudgetStatus = (startDate, endDate) => {
+    const currentDate = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (currentDate < start) return 'Pending';
+    if (currentDate > end) return 'Expired';
+    return 'Active';
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Budget Planner</h1>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Budget Name
-          </label>
-          <input
-            type="text"
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={budgetName}
-            onChange={(e) => setBudgetName(e.target.value)}
-            placeholder="Enter budget name"
-          />
-        </div>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <h1 className="text-xl font-bold text-gray-800">Budget Manager</h1>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Total Income
-          </label>
-          <input
-            type="number"
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={income}
-            onChange={(e) => setIncome(e.target.value)}
-            placeholder="Enter your total income"
-          />
+      <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
+        <h2 className="text-base font-semibold text-gray-700">Add New Budget</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700">Category</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
+              value={currentBudget.category}
+              onChange={(e) =>
+                setCurrentBudget({ ...currentBudget, category: e.target.value })
+              }
+              placeholder="Enter category (e.g., Food, Housing)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700">Budget Amount</label>
+            <input
+              type="number"
+              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
+              value={currentBudget.amount}
+              onChange={(e) =>
+                setCurrentBudget({ ...currentBudget, amount: e.target.value })
+              }
+              placeholder="Enter budget amount"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700">Start Date</label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
+              value={currentBudget.startDate}
+              onChange={(e) =>
+                setCurrentBudget({ ...currentBudget, startDate: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700">End Date</label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
+              value={currentBudget.endDate}
+              onChange={(e) =>
+                setCurrentBudget({ ...currentBudget, endDate: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700">Recurring Type</label>
+            <select
+              className="w-full px-3 py-2 border rounded-lg text-xs focus:ring focus:ring-blue-200"
+              value={currentBudget.recurringType}
+              onChange={(e) =>
+                setCurrentBudget({
+                  ...currentBudget,
+                  recurringType: e.target.value,
+                })
+              }
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex gap-4">
-          <div className="w-1/2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          <div className="w-1/2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
-            </label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Recurring Type
-          </label>
-          <select
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={recurringType}
-            onChange={(e) => setRecurringType(e.target.value)}
+          <button
+            onClick={handleSaveBudget}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-xs"
           >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
+            Add Budget
+          </button>
         </div>
-
-        <button
-          onClick={handleGenerateBudget}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-        >
-          Generate Budget
-        </button>
       </div>
 
-      {budget && (
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4">Generated Budget</h2>
-          <div className="space-y-2">
-            {budget.map((item) => (
-              <div
-                key={item.category}
-                className="flex justify-between bg-gray-100 p-2 rounded"
-              >
-                <span className="font-medium">{item.category}</span>
-                <span>${item.amount}</span>
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold text-gray-700">All Budgets</h2>
+        {budgets.length > 0 ? (
+          budgets.map((budget, index) => (
+            <div
+              key={index}
+              className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center"
+            >
+              <div>
+                <h3 className="font-medium text-xs text-gray-700">{budget.category}</h3>
+                <p className="text-xs text-gray-500">
+                  ${budget.amount} - {budget.recurringType.charAt(0).toUpperCase() +
+                    budget.recurringType.slice(1)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatDate(budget.startDate)} to {formatDate(budget.endDate)}
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  getBudgetStatus(budget.startDate, budget.endDate) === 'Active'
+                    ? 'bg-green-200 text-green-800'
+                    : getBudgetStatus(budget.startDate, budget.endDate) === 'Expired'
+                    ? 'bg-gray-200 text-gray-800'
+                    : 'bg-yellow-200 text-yellow-800'
+                }`}
+              >
+                {getBudgetStatus(budget.startDate, budget.endDate)}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-xs text-gray-600">No budgets added yet.</p>
+        )}
+      </div>
     </div>
   );
 };

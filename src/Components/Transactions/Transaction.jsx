@@ -3,11 +3,36 @@ import { format } from "date-fns";
 import { Plus, Search, Edit2, Trash2, X } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { ToastContainer } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
 import "react-toastify/dist/ReactToastify.css";
 import { deleteTransaction, getTransactions, registerTransactions, updatetransaction } from "../api Service/api";
 import { useNavigate } from "react-router-dom";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
 const TransactionManagement = () => {
+  // [Previous state declarations remain the same]
   const [transactions, setTransactions] = useState([
     {
       id: 1,
@@ -38,10 +63,6 @@ const TransactionManagement = () => {
   const [transactionsPerPage] = useState(5);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getTransactions(setTransactions, setIsLoading);
-  }, []);
-
   const [formData, setFormData] = useState({
     date: "",
     amount: "",
@@ -51,6 +72,7 @@ const TransactionManagement = () => {
     description: "",
     type: "",
   });
+
   const [errors, setErrors] = useState({
     date: "",
     amount: "",
@@ -60,6 +82,12 @@ const TransactionManagement = () => {
     description: "",
     type: "",
   });
+
+  // [Previous functions remain the same]
+
+  useEffect(() => {
+    getTransactions(setTransactions, setIsLoading);
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -103,9 +131,9 @@ const TransactionManagement = () => {
 
   const categories = ["Expense", "Income"];
   const accountTypes = ["Bank", "Mobile money", "Cash"];
+
   const handleupdateTransaction = async () => {
     try {
-      // const
       await updatetransaction(editingTransaction._id, formData);
       console.log('Transaction updated successfully');
       window.location.reload();
@@ -125,12 +153,10 @@ const TransactionManagement = () => {
         await handleupdateTransaction();
       }
     } else {
-      // Call registerTransactions if adding a new transaction
       await registerTransactions(formData, navigate, setIsLoading);
       console.log('Transaction added successfully');
     }
   
-    // Reset form and state after submission
     setIsFormOpen(false);
     setEditingTransaction(null);
     setFormData({
@@ -141,7 +167,6 @@ const TransactionManagement = () => {
       description: "",
     });
   };
-  
 
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
@@ -151,26 +176,20 @@ const TransactionManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-     if(confirm("Are you really wantt to delete this transaction?")){
-      await deleteTransaction(id);
-     }
-
+      if(confirm("Are you really want to delete this transaction?")){
+        await deleteTransaction(id);
+      }
       setTransactions(transactions.filter((transaction) => transaction.id !== id));
     } catch (error) {
       console.error('Error handling delete:', error);
     }
   };
-  // Filtering and Pagination Logic
+
   const filteredTransactions = transactions.filter((transaction) => {
     return (
-      (selectedCategory === "all" ||
-        transaction.category === selectedCategory) &&
-      (selectedAccountType === "all" ||
-        transaction.accountType === selectedAccountType) &&
-      (!searchTerm ||
-        transaction.description
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())) &&
+      (selectedCategory === "all" || transaction.category === selectedCategory) &&
+      (selectedAccountType === "all" || transaction.accountType === selectedAccountType) &&
+      (!searchTerm || transaction.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (!dateRange.start || new Date(transaction.date) >= new Date(dateRange.start))
     );
   });
@@ -189,22 +208,48 @@ const TransactionManagement = () => {
   };
 
   return (
-    <div className="p-4 min-h-screen mx-auto">
-      <ToastContainer></ToastContainer>
-      <div className="mb-6">
+    <motion.div 
+      className="p-4 min-h-screen mx-auto"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <ToastContainer />
+      
+      <motion.div 
+        className="mb-6"
+        variants={itemVariants}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">Transaction Management</h1>
-          <button
+          <motion.h1 
+            className="text-xl font-bold"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Transaction Management
+          </motion.h1>
+          <motion.button
             onClick={() => setIsFormOpen(true)}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center text-sm"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Plus size={16} className="mr-2" />
             Add Transaction
-          </button>
+          </motion.button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
-          <div className="relative">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm"
+          variants={itemVariants}
+        >
+          {/* Search Input */}
+          <motion.div 
+            className="relative"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
             <input
               type="text"
               placeholder="Search transactions..."
@@ -212,133 +257,172 @@ const TransactionManagement = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Search
-              className="absolute left-2 top-2.5 text-gray-400"
-              size={16}
+            <Search className="absolute left-2 top-2.5 text-gray-400" size={16} />
+          </motion.div>
+
+          {/* Date Range Input */}
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <input
+              type="date"
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+              value={dateRange.start}
+              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
             />
-          </div>
+          </motion.div>
 
-          <input
-            type="date"
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={dateRange.start}
-            onChange={(e) =>
-              setDateRange({ ...dateRange, start: e.target.value })
-            }
-          />
-
-          <select
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+          {/* Category Select */}
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400 }}
           >
-            <option value="all">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            <select
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </motion.div>
 
-          <select
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={selectedAccountType}
-            onChange={(e) => setSelectedAccountType(e.target.value)}
+          {/* Account Type Select */}
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400 }}
           >
-            <option value="all">All Accounts</option>
-            {accountTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+            <select
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+              value={selectedAccountType}
+              onChange={(e) => setSelectedAccountType(e.target.value)}
+            >
+              <option value="all">All Accounts</option>
+              {accountTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-      <div className="bg-white rounded-lg shadow-sm">
+      <motion.div 
+        className="bg-white rounded-lg shadow-sm"
+        variants={itemVariants}
+      >
         {isLoading ? (
-          <div className="flex justify-center items-center">
+          <motion.div 
+            className="flex justify-center items-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <CircularProgress />
-          </div>
+          </motion.div>
         ) : (
-          <div>
+          <motion.div variants={containerVariants}>
             <h2 className="text-sm font-bold px-2">Transactions</h2>
             <table className="min-w-full table-auto text-xs">
               <thead>
                 <tr className="border-b">
-                  <th className="py-2 px-2  text-left">Date</th>
-                  <th className="py-2 px-2  text-left">Description</th>
-                  <th className="py-2 px-2  text-left">Category</th>
-                  <th className="py-2 px-2  text-left">Account Type</th>
-                  <th className="py-2 px-2  text-center">Amount</th>
-                  <th className="py-2 px-2  text-center">Action</th>
+                  <th className="py-2 px-2 text-left">Date</th>
+                  <th className="py-2 px-2 text-left">Description</th>
+                  <th className="py-2 px-2 text-left">Category</th>
+                  <th className="py-2 px-2 text-left">Account Type</th>
+                  <th className="py-2 px-2 text-center">Amount</th>
+                  <th className="py-2 px-2 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody>
-                {currentTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="py-4 text-center text-gray-500">
-                      No transactions available.
-                    </td>
-                  </tr>
-                ) : (
-                  currentTransactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="border-b hover:bg-gray-50"
+              <AnimatePresence mode="wait">
+                <tbody>
+                  {currentTransactions.length === 0 ? (
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                     >
-                      <td className="py-1 px-2">
-                        {format(new Date(transaction.date), "MM/dd/yy")}
+                      <td colSpan="6" className="py-4 text-center text-gray-500">
+                        No transactions available.
                       </td>
-                      <td className="py-1 px-2">{transaction.description}</td>
-                      <td className="py-1 px-2">{transaction.category}</td>
-                      <td className="py-1 px-2">{transaction.account}</td>
-                      <td
-                        className={`py-1 px-2 text-center ${
-                          transaction.amount > 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                    </motion.tr>
+                  ) : (
+                    currentTransactions.map((transaction, index) => (
+                      <motion.tr
+                        key={transaction.id}
+                        className="border-b hover:bg-gray-50"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ 
+                          delay: index * 0.05,
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 24
+                        }}
                       >
-                        RWF {Math.abs(transaction.amount).toLocaleString()}
-                      </td>
-                      <td className="py-1 px-2 text-right">
-                        <button
-                          className="text-blue-500 hover:text-blue-700 mr-2"
-                          onClick={() => handleEdit(transaction)}
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDelete(transaction._id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+                        <td className="py-1 px-2">
+                          {format(new Date(transaction.date), "MM/dd/yy")}
+                        </td>
+                        <td className="py-1 px-2">{transaction.description}</td>
+                        <td className="py-1 px-2">{transaction.category}</td>
+                        <td className="py-1 px-2">{transaction.account}</td>
+                        <td className={`py-1 px-2 text-center ${
+                          transaction.amount > 0 ? "text-green-600" : "text-red-600"
+                        }`}>
+                          RWF {Math.abs(transaction.amount).toLocaleString()}
+                        </td>
+                        <td className="py-1 px-2 text-right">
+                          <motion.button
+                            className="text-blue-500 hover:text-blue-700 mr-2"
+                            onClick={() => handleEdit(transaction)}
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Edit2 size={16} />
+                          </motion.button>
+                          <motion.button
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleDelete(transaction._id)}
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Trash2 size={16} />
+                          </motion.button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </AnimatePresence>
             </table>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
-      <div className="mt-4 flex justify-center space-x-2">
+      {/* Pagination */}
+      <motion.div 
+        className="mt-4 flex justify-center space-x-2"
+        variants={itemVariants}
+      >
         {[...Array(totalPages)].map((_, i) => (
-          <button
+          <motion.button
             key={i}
             className={`px-3 py-1 border rounded ${
               currentPage === i + 1 ? "bg-blue-950 text-white" : "bg-white"
             }`}
             onClick={() => handlePageChange(i + 1)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             {i + 1}
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
+      {/* Modal Form */}
+      <AnimatePresence>
       {isFormOpen && (
         <div className="fixed inset-0 bg-black z-50 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -473,7 +557,8 @@ const TransactionManagement = () => {
           </div>
         </div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
