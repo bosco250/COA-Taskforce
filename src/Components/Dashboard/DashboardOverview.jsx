@@ -308,8 +308,9 @@ const DashboardOverview = () => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-1 px-2">Date</th>
-                <th className="text-left py-1 px-2">Description</th>
                 <th className="text-left py-1 px-2">Category</th>
+                <th className="text-left py-1 px-2">Sub Category</th>
+                <th className="text-left py-1 px-2">Type</th>
                 <th className="text-left py-1 px-2">Account</th>
                 <th className="text-right py-1 px-2">Amount</th>
               </tr>
@@ -341,6 +342,7 @@ const DashboardOverview = () => {
                         {format(new Date(transaction.date), "MM/dd/yy")}
                       </td>
                       <td className="py-1 px-2">{transaction.description}</td>
+                      <td className="py-1 px-2">{transaction.subcategory}</td>
                       <td className="py-1 px-2">{transaction.category}</td>
                       <td className="py-1 px-2">{transaction.account}</td>
                       <td

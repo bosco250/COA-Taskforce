@@ -328,8 +328,9 @@ const TransactionManagement = () => {
               <thead>
                 <tr className="border-b">
                   <th className="py-2 px-2 text-left">Date</th>
-                  <th className="py-2 px-2 text-left">Description</th>
                   <th className="py-2 px-2 text-left">Category</th>
+                  <th className="py-2 px-2 text-left">Sub Category</th>
+                  <th className="py-2 px-2 text-left">Type</th>
                   <th className="py-2 px-2 text-left">Account Type</th>
                   <th className="py-2 px-2 text-center">Amount</th>
                   <th className="py-2 px-2 text-center">Action</th>
@@ -366,6 +367,7 @@ const TransactionManagement = () => {
                           {format(new Date(transaction.date), "MM/dd/yy")}
                         </td>
                         <td className="py-1 px-2">{transaction.description}</td>
+                        <td className="py-1 px-2">{transaction.subcategory}</td>
                         <td className="py-1 px-2">{transaction.category}</td>
                         <td className="py-1 px-2">{transaction.account}</td>
                         <td className={`py-1 px-2 text-center ${
@@ -470,7 +472,18 @@ const TransactionManagement = () => {
                   }
                 />
               </div>
-
+              <div>
+                <input
+                  type="text"
+                  required
+                  className="w-full placeholder:text-gray-950 px-3 py-2 border rounded-lg text-sm"
+                  value={formData.description}
+                  placeholder="Category..."
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              </div>
               <div>
                 <select
                   required
@@ -480,7 +493,7 @@ const TransactionManagement = () => {
                     setFormData({ ...formData, category: e.target.value })
                   }
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Select Type</option>
                   {categories.map((category) => (
                     <option key={category} value={category}>
                       {category}
@@ -534,18 +547,7 @@ const TransactionManagement = () => {
                 </select>
               </div>
 
-              <div>
-                <input
-                  type="text"
-                  required
-                  className="w-full placeholder:text-gray-950 px-3 py-2 border rounded-lg text-sm"
-                  value={formData.description}
-                  placeholder="Description..."
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
+             
 
               <button
                 type="submit"

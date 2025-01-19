@@ -211,8 +211,9 @@ const Reports = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left">Date</th>
+                  <th className="px-4 py-2 text-left">Type</th>                  
                   <th className="px-4 py-2 text-left">Category</th>
-                  <th className="px-4 py-2 text-left">Subcategory</th>
+                  <th className="px-4 py-2 text-left">Sub Category</th>
                   <th className="px-4 py-2 text-left">Account</th>
                   <th className="px-4 py-2 text-right">Amount</th>
                 </tr>
@@ -222,6 +223,7 @@ const Reports = () => {
                   <tr key={index} className="border-b">
                     <td className="px-4 py-2">{format(new Date(transaction.date), 'MM/dd/yyyy')}</td>
                     <td className="px-4 py-2">{transaction.category}</td>
+                    <td className="px-4 py-2">{transaction.description}</td>
                     <td className="px-4 py-2">{transaction.subcategory}</td>
                     <td className="px-4 py-2">{transaction.account}</td>
                     <td className={`px-4 py-2 text-right ${
