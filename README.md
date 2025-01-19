@@ -42,7 +42,7 @@ This project leverages a set of modern web technologies and tools to create a se
 
    First, clone the repository to your local machine using the following command:
 
-   git clone https://github.com/your-username/expense-tracker.git
+   git clone https://github.com/bosco250/COA-Taskforce.git
 Install dependencies:
 
 After cloning the repository, navigate to the project directory and install the required dependencies:
